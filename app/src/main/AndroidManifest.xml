@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:allowBackup="false" android:label="Paradee TTS" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+            <intent-filter><action android:name="android.speech.tts.engine.CONFIGURE_ENGINE"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+        </activity>
+        <activity android:name=".CheckVoiceData" android:exported="true">
+            <intent-filter><action android:name="android.speech.tts.engine.CHECK_TTS_DATA"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+        </activity>
+        <activity android:name=".GetSampleText" android:exported="true">
+            <intent-filter><action android:name="android.speech.tts.engine.GET_SAMPLE_TEXT"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+        </activity>
+        <service android:name=".ParadeeService" android:exported="true" android:label="Paradee TTS">
+            <intent-filter><action android:name="android.intent.action.TTS_SERVICE"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+            <meta-data android:name="android.speech.tts" android:resource="@xml/tts_engine"/>
+        </service>
+    </application>
+</manifest>
