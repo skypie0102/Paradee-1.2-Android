@@ -1,0 +1,61 @@
+name: Publish a tested APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Build Android APK run ID
+        required: true
+        type: string
+      tag:
+        description: New release tag
+        required: true
+        type: string
+      target:
+        description: Commit SHA built by the specified run
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download verified build artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$TARGET" =~ ^[0-9a-f]{40}$ ]]
+          run_info=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID")
+          test "$(jq -r '.conclusion' <<< "$run_info")" = success
+          test "$(jq -r '.head_sha' <<< "$run_info")" = "$TARGET"
+          test "$(jq -r '.name' <<< "$run_info")" = 'Build Android APK'
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name paradee-tts-arm64-v8a-debug --dir dist
+          mv dist/app-debug.apk dist/Paradee-TTS-1.1-arm64-debug.apk
+      - name: Publish testing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^[A-Za-z0-9._-]+$ ]]
+          cat > /tmp/paradee-notes.md <<'NOTES'
+          Android arm64-v8a testing APK. This build is debug-signed and has not been verified on a physical phone.
+
+          It adds a voice preview, fixes voice selection and British phonemization, and adapts eSpeak output for Paradee 1.2. Some pronunciations may still differ from the original Misaki frontend.
+
+          If Android refuses to update because the signing keys differ, uninstall the earlier debug APK first. This removes its settings.
+          NOTES
+          sha256sum dist/Paradee-TTS-1.1-arm64-debug.apk >> /tmp/paradee-notes.md
+          gh release create "$RELEASE_TAG" dist/Paradee-TTS-1.1-arm64-debug.apk \
+            --repo "$GITHUB_REPOSITORY" --target "$TARGET" --prerelease \
+            --title 'Paradee TTS 1.1 — Android testing build' --notes-file /tmp/paradee-notes.md
