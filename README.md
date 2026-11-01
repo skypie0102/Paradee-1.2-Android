@@ -24,6 +24,10 @@ The original Paradee frontend uses Misaki; this prototype uses eSpeak NG via pip
 
 Run Android unit tests with `./gradlew testDebugUnitTest`. For model verification install `onnx`, `onnxruntime`, `numpy`, and `sherpa-onnx==2.0.1`, then run `python3 verify_model.py`. This checks the inference path, not Android's text frontend or service.
 
+## App icon
+
+The original parakeet SVG is in `artwork/paradee-parakeet.svg`. Android launcher resources can be regenerated with `python3 tools/generate_launcher_icons.py`; the adaptive icon keeps the bird within the launcher safe zone.
+
 ## Licenses
 
 Paradee and sherpa-onnx are Apache 2.0; see `licenses/`. Piper-phonemize's published POM identifies GPLv3 and its source and included components have their own license notices; consult [its license file](https://github.com/csukuangfj/piper-phonemize/blob/v1.5.9/LICENSE.md) and [license directory](https://github.com/csukuangfj/piper-phonemize/tree/v1.5.9/licenses) before distributing a derivative. The Gradle dependencies have additional licenses.
