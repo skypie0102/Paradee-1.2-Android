@@ -6,8 +6,8 @@ android {
         applicationId = "org.example.paradeetts"
         minSdk = 23
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
         ndk { abiFilters += "arm64-v8a" }
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -16,4 +16,5 @@ android {
 dependencies {
     implementation(files("libs/sherpa-onnx-2.0.1.aar"))
     implementation(files("libs/piper-phonemize-v1.5.9.aar"))
+    testImplementation("junit:junit:4.13.2")
 }

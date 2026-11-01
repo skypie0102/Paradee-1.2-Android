@@ -63,17 +63,17 @@ class ParadeeService : TextToSpeechService() {
             if (onIsLanguageAvailable(request.language, request.country, request.variant) == TextToSpeech.LANG_NOT_SUPPORTED) { callback.error(); return }
             val tts = ensureEngine()
             if (ticket != stopGeneration.get()) return
-            val id = voiceNames.indexOf(request.voiceName).takeIf { it >= 0 }
-                ?: getSharedPreferences("paradee", MODE_PRIVATE).getInt("voice", 0).coerceIn(0, 3)
+            val prefs = getSharedPreferences("paradee", MODE_PRIVATE)
+            val id = resolveVoiceIndex(request.voiceName, prefs.getInt("voice", 0), prefs.getBoolean("allow_app_voices", false))
             val text = request.charSequenceText.toString()
             if (callback.start(tts.sampleRate(), AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) return
             if (text.isBlank()) { callback.done(); return }
-            val result = piperPhonemizeText(text, if (id == 1 || id == 3) "en-gb" else "en-us")
+            val result = piperPhonemizeText(text, espeakVoice(id))
                 ?: throw IllegalStateException("Could not phonemize text")
             val sentences = try {
                 val chunks = mutableListOf<IntArray>()
                 for (i in 0 until result.numSentences) {
-                    val phonemes = result.getPhonemes(i)
+                    val phonemes = ParadeePhonemes.convert(result.getPhonemes(i), british = isBritishVoice(id))
                     var begin = 0
                     while (begin < phonemes.size) {
                         var end = minOf(begin + 480, phonemes.size)
