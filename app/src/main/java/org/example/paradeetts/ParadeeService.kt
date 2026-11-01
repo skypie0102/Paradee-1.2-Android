@@ -86,14 +86,13 @@ class ParadeeService : TextToSpeechService() {
                 }
                 chunks.toTypedArray()
             } finally { result.close() }
-            val pauseCut = prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT).coerceIn(0, 100)
+            val pauseCut = prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT).coerceIn(0, MAX_PAUSE_CUT_PERCENT)
             val config = GenerationConfig(silenceScale = silenceScaleForCut(pauseCut), sid = id, speed = (request.speechRate / 100.0f).coerceIn(0.5f, 2.0f), phonemeCodepoints = sentences)
             tts.generateWithConfigAndCallback("", config) { samples ->
                 if (ticket != stopGeneration.get()) 0 else {
-                    val output = if (pauseCut == 100) removeQuietPauses(samples, tts.sampleRate()) else samples
-                    val pcm = ByteArray(output.size * 2)
-                    for (i in output.indices) {
-                        val value = (output[i].coerceIn(-1f, 1f) * 32767).toInt()
+                    val pcm = ByteArray(samples.size * 2)
+                    for (i in samples.indices) {
+                        val value = (samples[i].coerceIn(-1f, 1f) * 32767).toInt()
                         pcm[2*i] = value.toByte(); pcm[2*i+1] = (value shr 8).toByte()
                     }
                     var pos = 0

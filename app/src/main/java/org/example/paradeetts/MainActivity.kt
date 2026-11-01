@@ -55,14 +55,14 @@ class MainActivity : Activity() {
             text = "Leave this off to use the selected voice in every app. When on, apps can override it."
             setPadding(0, 8, 0, 12)
         })
-        val pauseValue = prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT).coerceIn(0, 100)
+        val pauseValue = prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT).coerceIn(0, MAX_PAUSE_CUT_PERCENT)
         val pauseLabel = TextView(this).apply {
             text = "Cut quiet pauses: $pauseValue%"
             setPadding(0, 24, 0, 4)
         }
         layout.addView(pauseLabel)
         val pauseSlider = SeekBar(this).apply {
-            max = 100
+            max = MAX_PAUSE_CUT_PERCENT
             progress = pauseValue
             contentDescription = "Percentage to cut from quiet pauses"
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -86,11 +86,11 @@ class MainActivity : Activity() {
             addView(Button(this@MainActivity).apply {
                 text = "+ 1%"
                 contentDescription = "Increase pause cut by one percent"
-                setOnClickListener { pauseSlider.progress = (pauseSlider.progress + 1).coerceAtMost(100) }
+                setOnClickListener { pauseSlider.progress = (pauseSlider.progress + 1).coerceAtMost(MAX_PAUSE_CUT_PERCENT) }
             }, buttonLayout())
         })
         layout.addView(TextView(this).apply {
-            text = "0% keeps the original; 100% removes detected quiet pauses. Applies to quiet stretches of at least 0.2 seconds."
+            text = "0% keeps the original; 50% cuts detected quiet pauses in half. Applies to quiet stretches of at least 0.2 seconds."
             setPadding(0, 8, 0, 12)
         })
         val sampleText = EditText(this).apply {
