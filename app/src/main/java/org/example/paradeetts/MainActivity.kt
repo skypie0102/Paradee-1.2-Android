@@ -55,13 +55,42 @@ class MainActivity : Activity() {
             text = "Leave this off to use the selected voice in every app. When on, apps can override it."
             setPadding(0, 8, 0, 12)
         })
-        layout.addView(Switch(this).apply {
-            text = "Preserve original pauses"
-            isChecked = prefs.getBoolean("preserve_pauses", true)
-            setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean("preserve_pauses", checked).apply() }
+        val pauseValue = prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT).coerceIn(0, 100)
+        val pauseLabel = TextView(this).apply {
+            text = "Cut quiet pauses: $pauseValue%"
+            setPadding(0, 24, 0, 4)
+        }
+        layout.addView(pauseLabel)
+        val pauseSlider = SeekBar(this).apply {
+            max = 100
+            progress = pauseValue
+            contentDescription = "Percentage to cut from quiet pauses"
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
+                    pauseLabel.text = "Cut quiet pauses: $value%"
+                    prefs.edit().putInt("pause_cut_percent", value).apply()
+                }
+            })
+        }
+        layout.addView(pauseSlider)
+        layout.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            val buttonLayout = { LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f) }
+            addView(Button(this@MainActivity).apply {
+                text = "− 1%"
+                contentDescription = "Reduce pause cut by one percent"
+                setOnClickListener { pauseSlider.progress = (pauseSlider.progress - 1).coerceAtLeast(0) }
+            }, buttonLayout())
+            addView(Button(this@MainActivity).apply {
+                text = "+ 1%"
+                contentDescription = "Increase pause cut by one percent"
+                setOnClickListener { pauseSlider.progress = (pauseSlider.progress + 1).coerceAtMost(100) }
+            }, buttonLayout())
         })
         layout.addView(TextView(this).apply {
-            text = "Compare the preview with this on and off. Original pauses can increase the wait before speech."
+            text = "0% keeps the original; 100% removes detected quiet pauses. Applies to quiet stretches of at least 0.2 seconds."
             setPadding(0, 8, 0, 12)
         })
         val sampleText = EditText(this).apply {
