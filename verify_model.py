@@ -52,12 +52,12 @@ with tempfile.TemporaryDirectory() as tmp:
     model_path = pathlib.Path(tmp) / 'seeded.onnx'
     onnx.save(wrapped_model, model_path)
     lengths = {}
-    for scale in (0.5, 0.8, 0.9, 1.0):
+    for scale in (0.80, 0.85, 0.90, 0.95, 1.0):
         kokoro = sherpa.OfflineTtsKokoroModelConfig(model=str(model_path), voices=str(p/'voices.bin'), tokens=str(p/'tokens.txt'))
         engine = sherpa.OfflineTts(sherpa.OfflineTtsConfig(model=sherpa.OfflineTtsModelConfig(kokoro=kokoro, num_threads=1)))
         gen = sherpa.GenerationConfig(); gen.sid = 0; gen.speed = 1.0; gen.silence_scale = scale
         gen.phoneme_codepoints = [[ord(c) for c in phonemes]]
         lengths[scale] = len(engine.generate('', gen).samples)
     assert lengths[1.0] == len(reference_audio), (lengths, len(reference_audio))
-    assert lengths[0.5] < lengths[0.8] < lengths[0.9] < lengths[1.0], lengths
+    assert lengths[0.80] < lengths[0.85] < lengths[0.90] < lengths[0.95] < lengths[1.0], lengths
     print(f"pause regression (samples by retained scale): {lengths}")

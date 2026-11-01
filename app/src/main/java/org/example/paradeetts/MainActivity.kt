@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 
@@ -55,21 +57,23 @@ class MainActivity : Activity() {
             text = "Leave this off to use the selected voice in every app. When on, apps can override it."
             setPadding(0, 8, 0, 12)
         })
-        val pauseValue = prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT).coerceIn(0, MAX_PAUSE_CUT_PERCENT)
+        val pauseValue = normalizePauseCut(prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT))
         val pauseLabel = TextView(this).apply {
             text = "Cut quiet pauses: $pauseValue%"
             setPadding(0, 24, 0, 4)
         }
         layout.addView(pauseLabel)
         val pauseSlider = SeekBar(this).apply {
-            max = MAX_PAUSE_CUT_PERCENT
-            progress = pauseValue
-            contentDescription = "Percentage to cut from quiet pauses"
+            max = MAX_PAUSE_CUT_PERCENT / PAUSE_CUT_STEP_PERCENT
+            progress = pauseValue / PAUSE_CUT_STEP_PERCENT
+            contentDescription = "Pause cut: $pauseValue percent, in five-percent steps"
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-                override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val value = progress * PAUSE_CUT_STEP_PERCENT
                     pauseLabel.text = "Cut quiet pauses: $value%"
+                    seekBar?.contentDescription = "Pause cut: $value percent, in five-percent steps"
                     prefs.edit().putInt("pause_cut_percent", value).apply()
                 }
             })
@@ -77,20 +81,16 @@ class MainActivity : Activity() {
         layout.addView(pauseSlider)
         layout.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            val buttonLayout = { LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f) }
-            addView(Button(this@MainActivity).apply {
-                text = "− 1%"
-                contentDescription = "Reduce pause cut by one percent"
-                setOnClickListener { pauseSlider.progress = (pauseSlider.progress - 1).coerceAtLeast(0) }
-            }, buttonLayout())
-            addView(Button(this@MainActivity).apply {
-                text = "+ 1%"
-                contentDescription = "Increase pause cut by one percent"
-                setOnClickListener { pauseSlider.progress = (pauseSlider.progress + 1).coerceAtMost(MAX_PAUSE_CUT_PERCENT) }
-            }, buttonLayout())
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            for (value in 0..MAX_PAUSE_CUT_PERCENT step PAUSE_CUT_STEP_PERCENT) {
+                addView(TextView(this@MainActivity).apply {
+                    text = "$value%"
+                    gravity = Gravity.CENTER
+                }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            }
         })
         layout.addView(TextView(this).apply {
-            text = "0% keeps the original; 50% cuts detected quiet pauses in half. Applies to quiet stretches of at least 0.2 seconds."
+            text = "0% keeps the original; 20% cuts detected quiet pauses by one fifth. Applies to quiet stretches of at least 0.2 seconds."
             setPadding(0, 8, 0, 12)
         })
         val sampleText = EditText(this).apply {
