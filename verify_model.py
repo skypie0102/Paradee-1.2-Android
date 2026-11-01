@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Host smoke test: wrapper equivalence and sherpa inference for all voices."""
+import json
 import pathlib
+import tempfile
 import numpy as np
 import onnx
 import onnxruntime as ort
@@ -27,7 +29,35 @@ config = sherpa.OfflineTtsConfig(model=sherpa.OfflineTtsModelConfig(kokoro=sherp
 tts = sherpa.OfflineTts(config)
 assert tts.sample_rate == 24000 and tts.num_speakers == 4
 for sid in range(4):
-    cfg = sherpa.GenerationConfig(); cfg.sid = sid; cfg.phoneme_codepoints = [[ord(c) for c in 'həlˈoʊ.']]
+    cfg = sherpa.GenerationConfig(); cfg.sid = sid; cfg.silence_scale = 1.0; cfg.phoneme_codepoints = [[ord(c) for c in 'həlˈoʊ.']]
     audio = tts.generate('', cfg)
     assert audio.sample_rate == 24000 and len(audio.samples) > 0 and np.isfinite(audio.samples).all()
     print(f'voice {sid}: sherpa generated {len(audio.samples)} samples')
+
+# Compare sherpa's rendered length with the original graph for a sentence
+# containing a pause. The default 0.2 scale shortens it; 1.0 preserves it.
+phonemes = 'həlˈO, hˌW ɑɹ ju dˌuɪŋ tədˈA?'
+vocab = json.loads((root / 'model/config.json').read_text())['vocab']
+ids = np.array([[0] + [vocab[c] for c in phonemes if c in vocab] + [0]], dtype=np.int64)
+raw = onnx.load(original)
+wrapped_model = onnx.load(wrapped)
+for model in (raw, wrapped_model):
+    for node in model.graph.node:
+        if node.op_type == 'RandomNormalLike':
+            node.attribute.append(onnx.helper.make_attribute('seed', 123.0))
+options = ort.SessionOptions(); options.intra_op_num_threads = 1
+reference = ort.InferenceSession(raw.SerializeToString(), options, providers=['CPUExecutionProvider'])
+reference_audio = reference.run(None, {'input_ids': ids, 'speed': np.array([1.0], np.float32), 'voice': np.array([0], np.int64)})[0][0]
+with tempfile.TemporaryDirectory() as tmp:
+    model_path = pathlib.Path(tmp) / 'seeded.onnx'
+    onnx.save(wrapped_model, model_path)
+    lengths = {}
+    for scale in (0.2, 1.0):
+        kokoro = sherpa.OfflineTtsKokoroModelConfig(model=str(model_path), voices=str(p/'voices.bin'), tokens=str(p/'tokens.txt'))
+        engine = sherpa.OfflineTts(sherpa.OfflineTtsConfig(model=sherpa.OfflineTtsModelConfig(kokoro=kokoro, num_threads=1)))
+        gen = sherpa.GenerationConfig(); gen.sid = 0; gen.speed = 1.0; gen.silence_scale = scale
+        gen.phoneme_codepoints = [[ord(c) for c in phonemes]]
+        lengths[scale] = len(engine.generate('', gen).samples)
+    assert lengths[1.0] == len(reference_audio), (lengths, len(reference_audio))
+    assert lengths[0.2] < lengths[1.0], lengths
+    print(f"pause regression: original={len(reference_audio)}, preserved={lengths[1.0]}, shortened={lengths[0.2]} samples")
