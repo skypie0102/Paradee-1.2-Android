@@ -34,6 +34,15 @@ class MainActivity : Activity() {
             text = "Leave this off to use the selected voice in every app. When on, apps can override it."
             setPadding(0, 8, 0, 12)
         })
+        layout.addView(Switch(this).apply {
+            text = "Preserve original pauses"
+            isChecked = prefs.getBoolean("preserve_pauses", true)
+            setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean("preserve_pauses", checked).apply() }
+        })
+        layout.addView(TextView(this).apply {
+            text = "Compare the preview with this on and off. Original pauses can increase the wait before speech."
+            setPadding(0, 8, 0, 12)
+        })
         val sampleText = EditText(this).apply {
             setText("Hello, I am speaking with the selected Paradee voice.")
             hint = "Text to preview"
@@ -57,7 +66,8 @@ class MainActivity : Activity() {
         layout.addView(preview)
         layout.addView(Button(this).apply { text = "Open text-to-speech settings"; setOnClickListener { startActivity(Intent("com.android.settings.TTS_SETTINGS")) } })
         layout.addView(TextView(this).apply { text = "Choose Paradee TTS as the preferred engine in Android settings. Speech works offline."; setPadding(0, 24, 0, 0) })
-        setContentView(layout, ViewGroup.LayoutParams(-1, -1))
+        val scroll = ScrollView(this).apply { isFillViewport = true; addView(layout) }
+        setContentView(scroll, ViewGroup.LayoutParams(-1, -1))
 
         previewTts = TextToSpeech(this, { status ->
             previewReady = status == TextToSpeech.SUCCESS

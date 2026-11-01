@@ -25,7 +25,7 @@ class ParadeeService : TextToSpeechService() {
         engine?.let { return it }
         piperPhonemizeInitialize(applicationContext)
         val model = OfflineTtsKokoroModelConfig(model = "paradee/model.onnx", voices = "paradee/voices.bin", tokens = "paradee/tokens.txt")
-        return OfflineTts(assets, OfflineTtsConfig(model = OfflineTtsModelConfig(kokoro = model, numThreads = 1), silenceScale = 1.0f)).also { engine = it }
+        return OfflineTts(assets, OfflineTtsConfig(model = OfflineTtsModelConfig(kokoro = model, numThreads = 1), silenceScale = 0.2f)).also { engine = it }
     }
 
     override fun onIsLanguageAvailable(lang: String?, country: String?, variant: String?): Int {
@@ -86,9 +86,9 @@ class ParadeeService : TextToSpeechService() {
                 }
                 chunks.toTypedArray()
             } finally { result.close() }
-            // Preserve Paradee's generated pauses. sherpa's 0.2 default cuts
-            // low-volume pauses longer than 200 ms down to 20% of their length.
-            val config = GenerationConfig(silenceScale = 1.0f, sid = id, speed = (request.speechRate / 100.0f).coerceIn(0.5f, 2.0f), phonemeCodepoints = sentences)
+            // 1.0 preserves the model's pauses; 0.2 shortens quiet intervals.
+            val silenceScale = if (prefs.getBoolean("preserve_pauses", true)) 1.0f else 0.2f
+            val config = GenerationConfig(silenceScale = silenceScale, sid = id, speed = (request.speechRate / 100.0f).coerceIn(0.5f, 2.0f), phonemeCodepoints = sentences)
             tts.generateWithConfigAndCallback("", config) { samples ->
                 if (ticket != stopGeneration.get()) 0 else {
                     val pcm = ByteArray(samples.size * 2)
