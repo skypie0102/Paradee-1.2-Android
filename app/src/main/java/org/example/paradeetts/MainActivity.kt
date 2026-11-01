@@ -2,6 +2,7 @@ package org.example.paradeetts
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.view.ViewGroup
@@ -10,12 +11,32 @@ import android.widget.*
 class MainActivity : Activity() {
     private var previewTts: TextToSpeech? = null
     private var previewReady = false
+    private var sampleInput: EditText? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         val prefs = getSharedPreferences("paradee", MODE_PRIVATE)
+        val systemDark = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val dark = useDarkTheme(prefs.getString("theme_mode", "system"), systemDark)
+        setTheme(if (dark) android.R.style.Theme_Material_NoActionBar else android.R.style.Theme_Material_Light_NoActionBar)
+        super.onCreate(savedInstanceState)
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 48, 32, 32) }
         layout.addView(TextView(this).apply { text = "Paradee 1.2 system TTS"; textSize = 22f })
+        layout.addView(TextView(this).apply { text = "Appearance:"; setPadding(0, 24, 0, 12) })
+        layout.addView(Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, themeLabels)
+            val savedMode = prefs.getString("theme_mode", "system")
+            setSelection(themeModes.indexOf(savedMode).takeIf { it >= 0 } ?: 0)
+            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                    val mode = themeModes[position]
+                    if (mode != prefs.getString("theme_mode", "system")) {
+                        prefs.edit().putString("theme_mode", mode).apply()
+                        recreate()
+                    }
+                }
+            }
+        })
         layout.addView(TextView(this).apply { text = "Voice used in other apps:"; setPadding(0, 24, 0, 12) })
         layout.addView(Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, voiceLabels)
@@ -44,10 +65,11 @@ class MainActivity : Activity() {
             setPadding(0, 8, 0, 12)
         })
         val sampleText = EditText(this).apply {
-            setText("Hello, I am speaking with the selected Paradee voice.")
+            setText(savedInstanceState?.getString("preview_text") ?: "Hello, I am speaking with the selected Paradee voice.")
             hint = "Text to preview"
             setSingleLine(false)
         }
+        sampleInput = sampleText
         layout.addView(sampleText)
         val preview = Button(this).apply {
             text = "Preparing voice preview…"
@@ -74,6 +96,11 @@ class MainActivity : Activity() {
             preview.isEnabled = previewReady
             preview.text = if (previewReady) "Play selected voice" else "Voice preview unavailable"
         }, packageName)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("preview_text", sampleInput?.text?.toString())
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {

@@ -1,6 +1,6 @@
 # Paradee 1.2 Android system TTS prototype
 
-An offline Android system TTS engine for arm64-v8a. It combines the Paradee 1.2 int8 model with sherpa-onnx 2.0.1 and the piper-phonemize 1.5.9 Android library. The engine exposes `af_heart`, `bf_isabella`, `am_puck`, and `bm_fable`; the settings app lets you select and preview a voice. By default the selected voice applies to all requests, including requests with a cached Android default. Enable "Allow other apps to choose a voice" to let clients select one explicitly through Android's TTS API. Speech rate is supported between 0.5 and 2.0. Android 6.0 (API 23) or newer is required.
+An offline Android system TTS engine for arm64-v8a. The app offers system, light, and dark appearance settings. It combines the Paradee 1.2 int8 model with sherpa-onnx 2.0.1 and the piper-phonemize 1.5.9 Android library. The engine exposes `af_heart`, `bf_isabella`, `am_puck`, and `bm_fable`; the settings app lets you select and preview a voice. By default the selected voice applies to all requests, including requests with a cached Android default. Enable "Allow other apps to choose a voice" to let clients select one explicitly through Android's TTS API. Speech rate is supported between 0.5 and 2.0. Android 6.0 (API 23) or newer is required.
 
 ## Installation
 

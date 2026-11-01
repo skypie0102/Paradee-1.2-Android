@@ -51,7 +51,7 @@ jobs:
           cat > /tmp/paradee-notes.md <<'NOTES'
           Android arm64-v8a testing APK. This build is debug-signed and has not been verified on a physical phone.
 
-          This build includes the four Paradee 1.2 voices, a voice preview, and the app’s pronunciation and pause handling improvements. Some pronunciations may still differ from the original Misaki frontend; the model has no explicit emotion control.
+          This build includes system, light and dark themes, the four Paradee 1.2 voices, a voice preview, and the app’s pronunciation and pause handling improvements. Some pronunciations may still differ from the original Misaki frontend; the model has no explicit emotion control.
 
           If Android refuses to update because the signing keys differ, uninstall the earlier debug APK first. This removes its settings.
           NOTES
