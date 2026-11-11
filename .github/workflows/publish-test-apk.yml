@@ -51,7 +51,7 @@ jobs:
           cat > /tmp/paradee-notes.md <<'NOTES'
           Android arm64-v8a testing APK. This build is debug-signed and has not been verified on a physical phone.
 
-          This build removes unused non-English eSpeak dictionaries to reduce APK size while keeping the English fallback for Misaki and the previous eSpeak mode. It includes a parakeet launcher icon, system, light and dark themes, the four Paradee 1.2 voices, a voice preview, and adjustable pause cutting. Some pronunciations may still differ from the original Misaki frontend; the model has no explicit emotion control.
+          This build improves sentence splitting for common titles and abbreviations such as “Dr.” and “e.g.” while keeping the Misaki frontend, English eSpeak fallback, four Paradee 1.2 voices, and adjustable pause cutting. Sentence splitting is heuristic; some ambiguous abbreviations may still be handled incorrectly. The model has no explicit emotion control.
 
           If Android refuses to update because the signing keys differ, uninstall the earlier debug APK first. This removes its settings.
           NOTES
