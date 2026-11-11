@@ -24,6 +24,13 @@ class ParadeeService : TextToSpeechService() {
 
     private fun ensureEngine(): OfflineTts {
         engine?.let { return it }
+        // Older versions extracted every eSpeak dictionary into app-private storage.
+        // English voices use en_dict; the others are no longer included in the APK.
+        filesDir.resolve("espeak-ng-data").listFiles()?.forEach { file ->
+            if (file.isFile && file.name.endsWith("_dict") && file.name != "en_dict" && !file.delete()) {
+                Log.w("ParadeeTTS", "Could not remove unused eSpeak dictionary ${file.name}")
+            }
+        }
         piperPhonemizeInitialize(applicationContext)
         val model = OfflineTtsKokoroModelConfig(model = "paradee/model.onnx", voices = "paradee/voices.bin", tokens = "paradee/tokens.txt")
         return OfflineTts(assets, OfflineTtsConfig(model = OfflineTtsModelConfig(kokoro = model, numThreads = 1), silenceScale = 0.2f)).also { engine = it }

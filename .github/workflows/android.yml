@@ -22,6 +22,8 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
       - name: Test and build debug APK
         run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+      - name: Check packaged English eSpeak data
+        run: python3 tools/check_english_espeak.py
       - uses: actions/upload-artifact@v4
         with:
           name: paradee-tts-arm64-v8a-debug
