@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class ParadeeService : TextToSpeechService() {
     private var engine: OfflineTts? = null
     private val stopGeneration = AtomicInteger(0)
+    @Volatile private var misakiUsed = false
 
     private fun ensureEngine(): OfflineTts {
         engine?.let { return it }
@@ -55,7 +56,12 @@ class ParadeeService : TextToSpeechService() {
         return voiceNames[index]
     }
     override fun onStop() { stopGeneration.incrementAndGet() }
-    override fun onDestroy() { engine?.release(); engine = null; super.onDestroy() }
+    override fun onDestroy() {
+        if (misakiUsed) runCatching { MisakiBridge.release() }
+        engine?.release()
+        engine = null
+        super.onDestroy()
+    }
 
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
         val ticket = stopGeneration.get()
@@ -68,24 +74,27 @@ class ParadeeService : TextToSpeechService() {
             val text = request.charSequenceText.toString()
             if (callback.start(tts.sampleRate(), AudioFormat.ENCODING_PCM_16BIT, 1) != TextToSpeech.SUCCESS) return
             if (text.isBlank()) { callback.done(); return }
-            val result = piperPhonemizeText(text, espeakVoice(id))
-                ?: throw IllegalStateException("Could not phonemize text")
-            val sentences = try {
-                val chunks = mutableListOf<IntArray>()
-                for (i in 0 until result.numSentences) {
-                    val phonemes = ParadeePhonemes.convert(result.getPhonemes(i), british = isBritishVoice(id))
-                    var begin = 0
-                    while (begin < phonemes.size) {
-                        var end = minOf(begin + 480, phonemes.size)
-                        if (end < phonemes.size) {
-                            val space = (end - 1 downTo begin + 1).firstOrNull { phonemes[it] == 32 }
-                            if (space != null) end = space + 1
-                        }
-                        chunks.add(phonemes.copyOfRange(begin, end)); begin = end
-                    }
+            val chunks = mutableListOf<IntArray>()
+            if (prefs.getString("phonemizer", "misaki") != "espeak") {
+                for (sentence in splitSpeechSentences(text)) {
+                    if (ticket != stopGeneration.get()) return
+                    misakiUsed = true
+                    val phonemes = MisakiBridge.phonemize(sentence, isBritishVoice(id))
+                    chunks.addAll(chunkPhonemes(phonemeCodepoints(phonemes)))
                 }
-                chunks.toTypedArray()
-            } finally { result.close() }
+            } else {
+                val result = piperPhonemizeText(text, espeakVoice(id))
+                    ?: throw IllegalStateException("Could not phonemize text")
+                try {
+                    for (i in 0 until result.numSentences) {
+                        val phonemes = ParadeePhonemes.convert(result.getPhonemes(i), british = isBritishVoice(id))
+                        chunks.addAll(chunkPhonemes(phonemes))
+                    }
+                } finally {
+                    result.close()
+                }
+            }
+            val sentences = chunks.toTypedArray()
             val pauseCut = normalizePauseCut(prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT))
             val config = GenerationConfig(silenceScale = silenceScaleForCut(pauseCut), sid = id, speed = (request.speechRate / 100.0f).coerceIn(0.5f, 2.0f), phonemeCodepoints = sentences)
             tts.generateWithConfigAndCallback("", config) { samples ->
@@ -107,6 +116,9 @@ class ParadeeService : TextToSpeechService() {
             if (ticket == stopGeneration.get()) callback.done()
         } catch (e: Exception) {
             Log.e("ParadeeTTS", "Synthesis failed", e)
+            callback.error()
+        } catch (e: LinkageError) {
+            Log.e("ParadeeTTS", "Misaki native library could not be loaded", e)
             callback.error()
         }
     }

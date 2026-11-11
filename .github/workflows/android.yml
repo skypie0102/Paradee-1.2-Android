@@ -27,3 +27,20 @@ jobs:
           name: paradee-tts-arm64-v8a-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+  misaki-native-tests:
+    runs-on: ubuntu-24.04
+    env:
+      RUSTUP_TOOLCHAIN: '1.99.1'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Rust toolchain
+        run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+      - name: Test native Misaki against Python fixtures
+        run: cargo test --locked --release --manifest-path native/misaki-bridge/Cargo.toml
+      - name: Test native JNI bridge and fallback
+        run: tools/test_misaki_jni.sh

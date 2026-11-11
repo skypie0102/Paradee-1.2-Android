@@ -1,0 +1,54 @@
+{
+  "misaki_version": "0.9.4",
+  "lang": "b",
+  "cases": [
+    {
+      "text": "Please read the report I read yesterday.",
+      "ps": "plˈiːz ɹˈiːd ðə ɹɪpˈɔːt ˌI ɹˈɛd jˈɛstədA."
+    },
+    {
+      "text": "They record a record every week.",
+      "ps": "ðˌA ɹɪkˈɔːd ɐ ɹˈɛkɔːd ˈɛvəɹi wˈiːk."
+    },
+    {
+      "text": "The bath is near the water.",
+      "ps": "ðə bˈɑːθ ɪz nˌɪə ðə wˈɔːtə."
+    },
+    {
+      "text": "Never, potter, poured.",
+      "ps": "nˈɛvə, pˈɒtə, pˈɔːd."
+    },
+    {
+      "text": "Testing $123.45 on November 2nd.",
+      "ps": "tˈɛstɪŋ wˈʌn hˈʌndɹəd twˈɛnti θɹˈiː dˈɒləz and fˈɔːti fˈIv sˈɛnts ˌɒn nQvˈɛmbə sˈɛkᵊnd."
+    },
+    {
+      "text": "The quick brown fox jumps over the lazy dog.",
+      "ps": "ðə kwˈɪk bɹˈWn fˈɒks ʤˈʌmps ˈQvə ðə lˈAzi dˈɒɡ."
+    },
+    {
+      "text": "I saw a bird, and then I heard it sing.",
+      "ps": "ˌI sˈɔː ɐ bˈɜːd, and ðˈɛn ˌI hˈɜːd ɪt sˈɪŋ."
+    },
+    {
+      "text": "She lives at 10 Downing Street.",
+      "ps": "ʃˌiː lˈɪvz at tˈɛn dˈWnɪŋ stɹˈiːt."
+    },
+    {
+      "text": "It is 3:45 in the afternoon.",
+      "ps": "ˌɪt ɪz θɹˈiː fˈɔːti fˈIv ɪn ði ˌɑːftənˈuːn."
+    },
+    {
+      "text": "The wind was strong, but they continued walking.",
+      "ps": "ðə wˈɪnd wɒz stɹˈɒŋ, bˌʌt ðA kəntˈɪnjuːd wˈɔːkɪŋ."
+    },
+    {
+      "text": "Can you read this record before we leave?",
+      "ps": "kˌan juː ɹˈiːd ðɪs ɹˈɛkɔːd bɪfˈɔː wiː lˈiːv?"
+    },
+    {
+      "text": "A parakeet is sitting on the branch.",
+      "ps": "ɐ pˈaɹəkiːt ɪz sˈɪtɪŋ ˌɒn ðə bɹˈɑːnʧ."
+    }
+  ]
+}

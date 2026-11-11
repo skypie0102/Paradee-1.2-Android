@@ -57,6 +57,23 @@ class MainActivity : Activity() {
             text = "Leave this off to use the selected voice in every app. When on, apps can override it."
             setPadding(0, 8, 0, 12)
         })
+        layout.addView(TextView(this).apply { text = "Pronunciation:"; setPadding(0, 24, 0, 12) })
+        layout.addView(Spinner(this).apply {
+            val choices = listOf("Misaki (experimental)", "eSpeak (previous)")
+            val ids = listOf("misaki", "espeak")
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, choices)
+            setSelection(ids.indexOf(prefs.getString("phonemizer", "misaki")).takeIf { it >= 0 } ?: 0)
+            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                    prefs.edit().putString("phonemizer", ids[position]).apply()
+                }
+            }
+        })
+        layout.addView(TextView(this).apply {
+            text = "Misaki uses eSpeak for unfamiliar words. Switch options to compare the same preview."
+            setPadding(0, 8, 0, 12)
+        })
         val pauseValue = normalizePauseCut(prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT))
         val pauseLabel = TextView(this).apply {
             text = "Cut quiet pauses: $pauseValue%"

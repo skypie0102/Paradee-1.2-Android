@@ -1,0 +1,22 @@
+[package]
+name = "paradee-misaki"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "paradee_misaki"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+jni = { version = "0.21.1", default-features = false }
+misaki-rs = { git = "https://github.com/MicheleYin/misaki-rs.git", rev = "5a6ca6ccc5a234f583cbcac2e1c25b16c33405e5", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
+[dev-dependencies]
+serde_json = "1"
