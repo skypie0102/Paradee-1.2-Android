@@ -104,23 +104,32 @@ class ParadeeService : TextToSpeechService() {
             val sentences = chunks.toTypedArray()
             val pauseCut = normalizePauseCut(prefs.getInt("pause_cut_percent", DEFAULT_PAUSE_CUT_PERCENT))
             val config = GenerationConfig(silenceScale = silenceScaleForCut(pauseCut), sid = id, speed = (request.speechRate / 100.0f).coerceIn(0.5f, 2.0f), phonemeCodepoints = sentences)
-            tts.generateWithConfigAndCallback("", config) { samples ->
-                if (ticket != stopGeneration.get()) 0 else {
-                    val pcm = ByteArray(samples.size * 2)
-                    for (i in samples.indices) {
-                        val value = (samples[i].coerceIn(-1f, 1f) * 32767).toInt()
-                        pcm[2*i] = value.toByte(); pcm[2*i+1] = (value shr 8).toByte()
-                    }
-                    var pos = 0
-                    while (pos < pcm.size && ticket == stopGeneration.get()) {
-                        val n = minOf(callback.maxBufferSize, pcm.size - pos) and -2
-                        if (n <= 0 || callback.audioAvailable(pcm, pos, n) != TextToSpeech.SUCCESS) break
-                        pos += n
-                    }
-                    if (pos == pcm.size && ticket == stopGeneration.get()) 1 else 0
+            val trimmer = if (prefs.getBoolean("trim_request_silence", false)) RequestBoundaryTrimmer(tts.sampleRate()) else null
+            fun writeAudio(samples: FloatArray): Boolean {
+                if (ticket != stopGeneration.get()) return false
+                val pcm = ByteArray(samples.size * 2)
+                for (i in samples.indices) {
+                    val value = (samples[i].coerceIn(-1f, 1f) * 32767).toInt()
+                    pcm[2*i] = value.toByte(); pcm[2*i+1] = (value shr 8).toByte()
                 }
+                var pos = 0
+                while (pos < pcm.size && ticket == stopGeneration.get()) {
+                    val n = minOf(callback.maxBufferSize, pcm.size - pos) and -2
+                    if (n <= 0 || callback.audioAvailable(pcm, pos, n) != TextToSpeech.SUCCESS) return false
+                    pos += n
+                }
+                return pos == pcm.size && ticket == stopGeneration.get()
             }
-            if (ticket == stopGeneration.get()) callback.done()
+            var streamSucceeded = true
+            tts.generateWithConfigAndCallback("", config) { samples ->
+                if (ticket != stopGeneration.get()) 0 else if (writeAudio(trimmer?.accept(samples) ?: samples)) 1
+                else { streamSucceeded = false; 0 }
+            }
+            if (ticket == stopGeneration.get()) {
+                val remaining = trimmer?.finish()
+                if (streamSucceeded && (remaining == null || writeAudio(remaining))) callback.done()
+                else callback.error()
+            }
         } catch (e: Exception) {
             Log.e("ParadeeTTS", "Synthesis failed", e)
             callback.error()

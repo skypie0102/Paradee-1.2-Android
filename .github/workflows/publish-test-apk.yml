@@ -51,7 +51,7 @@ jobs:
           cat > /tmp/paradee-notes.md <<'NOTES'
           Android arm64-v8a testing APK. This build is debug-signed and has not been verified on a physical phone.
 
-          This build improves sentence splitting for common titles and abbreviations such as “Dr.” and “e.g.” while keeping the Misaki frontend, English eSpeak fallback, four Paradee 1.2 voices, and adjustable pause cutting. Sentence splitting is heuristic; some ambiguous abbreviations may still be handled incorrectly. The model has no explicit emotion control.
+          This build adds an optional setting to reduce very quiet audio at request boundaries, which can help readers that send one sentence per request. The setting defaults off and cannot remove delays added by the reader or Android. The existing pause-cut slider remains separate. It also includes Misaki, English eSpeak fallback, four Paradee 1.2 voices, and improved sentence splitting. The model has no explicit emotion control.
 
           If Android refuses to update because the signing keys differ, uninstall the earlier debug APK first. This removes its settings.
           NOTES

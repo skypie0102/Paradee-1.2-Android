@@ -107,7 +107,16 @@ class MainActivity : Activity() {
             }
         })
         layout.addView(TextView(this).apply {
-            text = "0% keeps the original; 20% cuts detected quiet pauses by one fifth. Applies to quiet stretches of at least 0.2 seconds."
+            text = "0% keeps pauses within the audio; 20% cuts detected quiet stretches of at least 0.2 seconds by one fifth."
+            setPadding(0, 8, 0, 12)
+        })
+        layout.addView(Switch(this).apply {
+            text = "Reduce silence at request boundaries"
+            isChecked = prefs.getBoolean("trim_request_silence", false)
+            setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean("trim_request_silence", checked).apply() }
+        })
+        layout.addView(TextView(this).apply {
+            text = "For readers that send one sentence at a time. Trims very quiet audio at the start and end of each request."
             setPadding(0, 8, 0, 12)
         })
         val sampleText = EditText(this).apply {
